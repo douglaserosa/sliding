@@ -11,53 +11,125 @@
 #include <iostream>
 #include <set>
 #include <vector>
-
+#include <list>
 
 using namespace std;
+
+#define up 0
+#define right 1
+#define down 2
+#define left 3
+
+int size = 3;
+int hole = 9;
 
 class Puzzle
 {
 public:
-    int size;
-    std::vector< std::vector<int> > board;
-	Puzzle(int n, string state);
-    void printPuzzle();
+	std::vector< std::vector<int> > board;
+	Puzzle *parent;
+	Puzzle();
+	Puzzle(std::vector< std::vector<int> > state, Puzzle *p);
+	void printPuzzle();
+	void move(int direction);
 };
 
-Puzzle::Puzzle (int n, string state) {
-    size = n;
-    board.resize(size);
-    for(int i = 0 ; i < size ; ++i)
-    {
-    	board[i].resize(size);
-    }
-    int r,c;
-    for(int i = 0 ; i < size*size ; ++i ){
-        r = i / size;
-        c = i % size;
-        board[r][c] = state[i] - '0';
-        // if(v[i]==9) this->vazio=i;
-    }    
+Puzzle::Puzzle (std::vector< std::vector<int> > state, Puzzle *p) {
+	board.resize(size);
+	for(int i = 0 ; i < size ; ++i) {
+		board[i].resize(size);
+	}
+	board = state;
+	parent = p;
 }
 
 void Puzzle::printPuzzle () {
-    for(int i = 0 ; i < size ; ++i)
-    {
-        for (int j = 0; j < size; ++j)
-        {
-            printf("%4d",board[i][j]);
-        }
-        cout << endl;
-    }
+	for(int i = 0 ; i < size ; ++i) {
+		printf("|");
+		for (int j = 0; j < size; ++j) {
+			if (board[i][j] != hole) {
+				printf("%3d",board[i][j]);
+			} else {
+				printf("   ");
+			}
+		}
+		printf("  |\n");
+	}
+	printf("\n");
+}
+
+std::vector< std::vector<int> > initialState;
+std::vector< std::vector<int> > finalState;
+std::set <std::vector< std::vector<int> > > createdStates;
+std::list <Puzzle> states;
+
+void imprime (std::vector< std::vector<int> > board) {
+	for(int i = 0 ; i < size ; ++i) {
+		printf("|");
+		for (int j = 0; j < size; ++j) {
+			if (board[i][j] != hole) {
+				printf("%3d",board[i][j]);
+			} else {
+				printf("   ");
+			}
+		}
+		printf("  |\n");
+	}
+	printf("\n");
+}
+
+void getInitialAndFinalStates () {
+	size = 3;
+	hole = 9;
+	string initial = "567498321";
+	string final = "123894765";
+	// ler size, hole, initial e final ;
+
+	initialState.resize(size);
+	finalState.resize(size);
+	for(int i = 0 ; i < size ; ++i) {
+		initialState[i].resize(size);
+		finalState[i].resize(size);
+	}
+	initialState[0][0] = 5;
+	initialState[0][1] = 6;
+	initialState[0][2] = 7;
+	initialState[1][0] = 4;
+	initialState[1][1] = 9;
+	initialState[1][2] = 8;
+	initialState[2][0] = 3;
+	initialState[2][1] = 2;
+	initialState[2][2] = 1;
+	finalState[0][0] = 1;
+	finalState[0][1] = 2;
+	finalState[0][2] = 3;
+	finalState[1][0] = 8;
+	finalState[1][1] = 9;
+	finalState[1][2] = 4;
+	finalState[2][0] = 7;
+	finalState[2][1] = 6;
+	finalState[2][2] = 5;
 }
 
 int main() {
-	Puzzle a(3,"123456789");
-	Puzzle b(4,"1234567890123456");
- //    Puzzle c(5);
- //    Puzzle d(2);
-    a.printPuzzle();
-    b.printPuzzle();
- //    c.printPuzzle();
- //    d.printPuzzle();
+	getInitialAndFinalStates();
+	Puzzle initial(initialState, NULL);
+	states.push_back(initial);
+	states.push_back(initial);
+	states.push_back(initial);
+	for (std::list<Puzzle>::iterator it=states.begin(); it != states.end(); ++it) {
+		(*it).printPuzzle();
+	}
+
+	printf("AGORA O SET\n");
+
+	createdStates.insert(initial.board);
+	createdStates.insert(initialState);
+	createdStates.insert(finalState);
+	createdStates.insert(initial.board);
+	createdStates.insert(finalState);
+	for (std::set <std::vector< std::vector<int> > >::iterator it=createdStates.begin(); it != createdStates.end(); ++it) {
+		imprime(*it);
+	}
+
 }
