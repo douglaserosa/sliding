@@ -30,8 +30,10 @@ public:
 	Puzzle();
 	Puzzle(std::vector< std::vector<int> > state, Puzzle *p);
 	void printPuzzle();
+	void move(int i, int j, int r, int c);
 	void moves();
-	void printResult();
+	void swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j, int r, int c);
+	int printResult(int step);
 };
 
 std::list <Puzzle> states;
@@ -69,93 +71,58 @@ void Puzzle::printPuzzle () {
 	printf("\n");
 }
 
-void swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j, int r, int c) {
-	int aux;
-	aux = auxBoard[i][j];
+void Puzzle::swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j, int r, int c) {
+	int swap;
+	swap = auxBoard[i][j];
 	auxBoard[i][j] = auxBoard[r][c];
-	auxBoard[r][c] = aux;
+	auxBoard[r][c] = swap;
 }
 
-void imprime (std::vector< std::vector<int> > board) {
-	for(int i = 0 ; i < size ; ++i) {
-		printf("|");
-		for (int j = 0; j < size; ++j) {
-			if (board[i][j] != empty) {
-				printf("%3d",board[i][j]);
-			} else {
-				printf("   ");
-			}
+void Puzzle::move(int i, int j, int r, int c) {
+	std::vector< std::vector<int> > auxBoard;
+	Puzzle *newState;
+
+	auxBoard = board;
+	swapEmpty(auxBoard, i, j, r, c);
+	if (createdStates.find(auxBoard) == createdStates.end()) {
+		createdStates.insert(auxBoard);
+		newState = new Puzzle(auxBoard,this);
+		states.push_back(*newState);
+		if (auxBoard == finalBoard) {
+			final = newState;
 		}
-		printf("  |\n");
 	}
-	printf("\n");
 }
-
 
 void Puzzle::moves() {
 	int i = emptyPosition / 3;
 	int j = emptyPosition % 3;
-	std::vector< std::vector<int> > auxBoard;
-	Puzzle *newState;
 	// mover para cima
 	if (i > 0) {
-		auxBoard = board;
-		swapEmpty(auxBoard,i,j,i-1,j);
-		if (createdStates.find(auxBoard) == createdStates.end()) {
-			createdStates.insert(auxBoard);
-			newState = new Puzzle(auxBoard,this);
-			states.push_back(*newState);
-			if (auxBoard == finalBoard) {
-				final = newState;
-			}
-		}
+		move(i,j,i-1,j);
 	}
 	// mover para direita
 	if (j < size - 1) {
-		auxBoard = board;
-		swapEmpty(auxBoard,i,j,i,j+1);
-		if (createdStates.find(auxBoard) == createdStates.end()) {
-			createdStates.insert(auxBoard);
-			newState = new Puzzle(auxBoard,this);
-			states.push_back(*newState);
-			if (auxBoard == finalBoard) {
-				final = newState;
-			}
-		}
+		move(i,j,i,j+1);
 	}
 	// mover para baixo
 	if (i < size - 1) {
-		auxBoard = board;
-		swapEmpty(auxBoard,i,j,i+1,j);
-		if (createdStates.find(auxBoard) == createdStates.end()) {
-			createdStates.insert(auxBoard);
-			newState = new Puzzle(auxBoard,this);
-			states.push_back(*newState);
-			if (auxBoard == finalBoard) {
-				final = newState;
-			}
-		}
+		move(i,j,i+1,j);
 	}
 	// mover para esquerda
 	if (j > 0) {
-		auxBoard = board;
-		swapEmpty(auxBoard,i,j,i,j-1);
-		if (createdStates.find(auxBoard) == createdStates.end()) {
-			createdStates.insert(auxBoard);
-			newState = new Puzzle(auxBoard,this);
-			states.push_back(*newState);
-			if (auxBoard == finalBoard) {
-				final = newState;
-			}
-		}
+		move(i,j,i,j-1);
 	}
 }
 
-void Puzzle::printResult() {
+int Puzzle::printResult(int step) {
 	if (parent != NULL) {
-		parent->printResult();
+		step = parent->printResult(step);
 	}
+	printf("Step %d\n", step);
+	step++;
 	printPuzzle();
+	return step;
 }
 
 void getInitialAndfinalBoards () {
@@ -189,35 +156,37 @@ void getInitialAndfinalBoards () {
 	finalBoard[2][0] = 7;
 	finalBoard[2][1] = 6;
 	finalBoard[2][2] = 5;
+	// finalBoard[0][0] = 5;
+	// finalBoard[0][1] = 6;
+	// finalBoard[0][2] = 7;
+	// finalBoard[1][0] = 4;
+	// finalBoard[1][1] = 9;
+	// finalBoard[1][2] = 8;
+	// finalBoard[2][0] = 3;
+	// finalBoard[2][1] = 2;
+	// finalBoard[2][2] = 1;
 }
 
 int main() {
 	getInitialAndfinalBoards();
 	initial = new Puzzle(initialBoard, NULL);
 	final = new Puzzle(finalBoard, NULL);
+
 	if (initial->board == finalBoard) {
-		final->parent = initial;
+		initial->printResult(0);
+		return 0;
 	}
+
 	states.push_back(*initial);
 	createdStates.insert(initial->board);
+
 	for (std::list<Puzzle>::iterator it=states.begin(); it != states.end() && final->parent == NULL; ++it) {
 		(*it).moves();
 	}
-
 	if (final->parent != NULL) {
-		final->printResult();
+		final->printResult(0);
+	} else {
+		printf("No RESULT\n");
 	}
-
-
-	// printf("AGORA O SET\n");
-
-	// createdStates.insert(initial.board);
-	// createdStates.insert(initialBoard);
-	// createdStates.insert(finalBoard);
-	// createdStates.insert(initial.board);
-	// createdStates.insert(finalBoard);
-	// for (std::set <std::vector< std::vector<int> > >::iterator it=createdStates.begin(); it != createdStates.end(); ++it) {
-	// 	imprime(*it);
-	// }
-
+	return 0;
 }
