@@ -37,7 +37,7 @@ public:
 };
 
 std::list <Puzzle> states;
-Puzzle *initial, *final;
+Puzzle *initialState, *finalState;
 
 Puzzle::Puzzle (std::vector< std::vector<int> > state, Puzzle *p) {
 	int i, j;
@@ -66,7 +66,7 @@ void Puzzle::printPuzzle () {
 				printf("   ");
 			}
 		}
-		printf("  |\n");
+		printf(" |\n");
 	}
 	printf("\n");
 }
@@ -89,21 +89,17 @@ void Puzzle::move(int i, int j, int r, int c) {
 		newState = new Puzzle(auxBoard,this);
 		states.push_back(*newState);
 		if (auxBoard == finalBoard) {
-			final = newState;
+			finalState = newState;
 		}
 	}
 }
 
 void Puzzle::moves() {
-	int i = emptyPosition / 3;
-	int j = emptyPosition % 3;
+	int i = emptyPosition / size;
+	int j = emptyPosition % size;
 	// mover para cima
 	if (i > 0) {
 		move(i,j,i-1,j);
-	}
-	// mover para direita
-	if (j < size - 1) {
-		move(i,j,i,j+1);
 	}
 	// mover para baixo
 	if (i < size - 1) {
@@ -112,6 +108,10 @@ void Puzzle::moves() {
 	// mover para esquerda
 	if (j > 0) {
 		move(i,j,i,j-1);
+	}
+	// mover para direita
+	if (j < size - 1) {
+		move(i,j,i,j+1);
 	}
 }
 
@@ -126,67 +126,50 @@ int Puzzle::printResult(int step) {
 }
 
 void getInitialAndfinalBoards () {
-	size = 3;
-	empty = 9;
-	string stringInitial = "567498321";
-	string stringFinal = "123894765";
-	// ler size, empty, initial e final ;
+	scanf("%d", &size);
+	scanf("%d", &empty);
 
 	initialBoard.resize(size);
 	finalBoard.resize(size);
+
 	for(int i = 0 ; i < size ; ++i) {
 		initialBoard[i].resize(size);
 		finalBoard[i].resize(size);
 	}
-	initialBoard[0][0] = 5;
-	initialBoard[0][1] = 6;
-	initialBoard[0][2] = 7;
-	initialBoard[1][0] = 4;
-	initialBoard[1][1] = 9;
-	initialBoard[1][2] = 8;
-	initialBoard[2][0] = 3;
-	initialBoard[2][1] = 2;
-	initialBoard[2][2] = 1;
-	finalBoard[0][0] = 1;
-	finalBoard[0][1] = 2;
-	finalBoard[0][2] = 3;
-	finalBoard[1][0] = 8;
-	finalBoard[1][1] = 9;
-	finalBoard[1][2] = 4;
-	finalBoard[2][0] = 7;
-	finalBoard[2][1] = 6;
-	finalBoard[2][2] = 5;
-	// finalBoard[0][0] = 5;
-	// finalBoard[0][1] = 6;
-	// finalBoard[0][2] = 7;
-	// finalBoard[1][0] = 4;
-	// finalBoard[1][1] = 9;
-	// finalBoard[1][2] = 8;
-	// finalBoard[2][0] = 3;
-	// finalBoard[2][1] = 2;
-	// finalBoard[2][2] = 1;
+	
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			scanf("%d%*c", &initialBoard[i][j]);
+		}
+	}
+
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			scanf("%d%*c", &finalBoard[i][j]);
+		}
+	}
 }
 
 int main() {
 	getInitialAndfinalBoards();
-	initial = new Puzzle(initialBoard, NULL);
-	final = new Puzzle(finalBoard, NULL);
+	initialState = new Puzzle(initialBoard, NULL);
+	finalState = new Puzzle(finalBoard, NULL);
 
-	if (initial->board == finalBoard) {
-		initial->printResult(0);
+	if (initialState->board == finalState->board) {
+		initialState->printResult(0);
 		return 0;
 	}
 
-	states.push_back(*initial);
-	createdStates.insert(initial->board);
+	states.push_back(*initialState);
+	createdStates.insert(initialState->board);
 
-	for (std::list<Puzzle>::iterator it=states.begin(); it != states.end() && final->parent == NULL; ++it) {
+	for (std::list<Puzzle>::iterator it=states.begin(); it != states.end() && finalState->parent == NULL; ++it) {
 		(*it).moves();
 	}
-	if (final->parent != NULL) {
-		final->printResult(0);
+	if (finalState->parent != NULL) {
+		finalState->printResult(0);
 	} else {
-		printf("No RESULT\n");
+		printf("NO RESULT\n");
 	}
 	return 0;
 }
