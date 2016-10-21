@@ -15,14 +15,13 @@
 #include <list>
 #include <climits>
 #include <cmath>
+#include <time.h>
 
 using namespace std;
 
-
-
 int size = 3;
 int empty = 9;
-unsigned long long int T = 0;
+double T = 0;
 std::vector< std::vector<int> > initialBoard;
 std::vector< std::vector<int> > finalBoard;
 std::set <std::vector< std::vector<int> > > createdStates;
@@ -42,10 +41,11 @@ public:
 	void swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j, int r, int c);
 	int printResult(int step);
 	int calcEnergy ();
+	int calcEnergy2 ();
 	int numberPosition(int n);
 };
 
-std::list <Puzzle> states;
+std::vector<Puzzle> queue;
 Puzzle *initialState, *finalState;
 
 Puzzle::Puzzle (std::vector< std::vector<int> > state, Puzzle *p) {
@@ -63,7 +63,8 @@ Puzzle::Puzzle (std::vector< std::vector<int> > state, Puzzle *p) {
 			emptyPosition = i * size + j;
 		}
 	}
-	energy = calcEnergy();
+	// energy = calcEnergy();
+	energy = calcEnergy2();
 }
 
 void Puzzle::printPuzzle () {
@@ -89,15 +90,14 @@ void Puzzle::swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j,
 }
 
 void Puzzle::move(int i, int j, int r, int c) {
-	std::vector< std::vector<int> > auxBoard;
+	std::vector< std::vector<int> > auxBoard = board;
 	Puzzle *newState;
 
-	auxBoard = board;
 	swapEmpty(auxBoard, i, j, r, c);
 	if (createdStates.find(auxBoard) == createdStates.end()) {
 		createdStates.insert(auxBoard);
 		newState = new Puzzle(auxBoard,this);
-		states.push_back(*newState);
+		queue.push_back(*newState);
 		if (auxBoard == finalBoard) {
 			finalState = newState;
 		}
@@ -135,14 +135,6 @@ int Puzzle::printResult(int step) {
 	return step;
 }
 
-unsigned long long int fat (int n) {
-	unsigned long long int f = 1;
-	for (n = n; n > 1; --n) {
-		f *= n;
-	}
-	return f;
-}
-
 int Puzzle::calcEnergy () {
 	int e = 0;
 	int i, j, k, r, c;
@@ -161,6 +153,19 @@ int Puzzle::calcEnergy () {
 	return e;
 }
 
+int Puzzle::calcEnergy2 () {
+	int e = 0;
+	int i, j, k, r, c;
+	for (i = 0; i < size; ++i) {
+		for (j = 0; j < size; ++j) {
+			if (board[i][j] != finalBoard[i][j]) {
+				e += 1;
+			}
+		}
+	}
+	return e;
+}
+
 int Puzzle::numberPosition(int n) {
 	int i, j;
 	for (int k = 0; k < size * size; ++k) {
@@ -171,6 +176,14 @@ int Puzzle::numberPosition(int n) {
 		}
 	}
 	return -1;
+}
+
+unsigned long long int fat (int n) {
+	unsigned long long int f = 1;
+	for (n = n; n > 1; --n) {
+		f *= n;
+	}
+	return f;
 }
 
 void getInitialAndfinalBoards () {
@@ -196,36 +209,62 @@ void getInitialAndfinalBoards () {
 			scanf("%d%*c", &finalBoard[i][j]);
 		}
 	}
-	T = fat(size * size) / 2;
+	// T = fat(size * size) / 2;
+	// T = (double) (size - 1) * 2 * size * size;
+	T = (double) size * size;
 }
 
-int main() {
+int main()
+{
+	Puzzle *current, *candidate;
+	int delta, index, next, max, min;
+	unsigned long long int maxStates;
+	double random, probability, reduction;
+
+	srand(time(NULL));
 	getInitialAndfinalBoards();
+
+	maxStates = fat(size*size) / 2;
+	reduction = (double) T / maxStates;
+
 	initialState = new Puzzle(initialBoard, NULL);
 	finalState = new Puzzle(finalBoard, NULL);
-
-
-	cout << initialState->energy << endl;
-	cout << finalState->energy << endl;
-
-	return 0;
 
 	if (initialState->board == finalState->board) {
 		initialState->printResult(0);
 		return 0;
 	}
 
-	states.push_back(*initialState);
+	queue.reserve(maxStates);
+	queue.push_back(*initialState);
 	createdStates.insert(initialState->board);
 
-	int x = 0;
-	for (std::list<Puzzle>::iterator it=states.begin(); it != states.end() && finalState->parent == NULL; ++it) {
-		x++;
-		(*it).moves();
+	for (index = 0, T = T; index < queue.size() && T > 0 && finalState->parent == NULL; T-=reduction, index++) {
+		current = &queue[index];
+		current->moves();
+		if (index + 1 < queue.size()) {
+			max = queue.size() - 1;
+			min = index + 1;
+			next = min + rand() % (max - min + 1);
+	  		candidate = &queue[next];
+	        delta = current->energy - candidate->energy;
+	        if (delta > 0) {
+	        	queue.insert(queue.begin() + index + 1, queue[next]);
+				queue.erase(queue.begin() + next + 1);
+        	} else {
+        		probability = pow(M_E, (double) delta / (double) T);
+        		random = (double) (rand() % 100) / 100;
+	        	// probability = pow(M_E, (double) delta / (double) current->energy);
+	        	if (random > probability) {
+	        		queue.insert(queue.begin() + index + 1, queue[next]);
+					queue.erase(queue.begin() + next + 1);
+	        	}
+        	}
+		}
 	}
 	if (finalState->parent != NULL) {
+		printf("ACHOU\n");
 		finalState->printResult(0);
-		printf("%d\n", x);
 	} else {
 		printf("NO RESULT\n");
 	}
