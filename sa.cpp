@@ -5,6 +5,7 @@
  * Created on Oct 7, 2016, 3:20 AM
  */
 
+#define _USE_MATH_DEFINES
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstdlib>
@@ -13,11 +14,15 @@
 #include <vector>
 #include <list>
 #include <climits>
+#include <cmath>
 
 using namespace std;
 
+
+
 int size = 3;
 int empty = 9;
+unsigned long long int T = 0;
 std::vector< std::vector<int> > initialBoard;
 std::vector< std::vector<int> > finalBoard;
 std::set <std::vector< std::vector<int> > > createdStates;
@@ -27,6 +32,7 @@ class Puzzle
 public:
 	std::vector< std::vector<int> > board;
 	int emptyPosition;
+	int energy;
 	Puzzle *parent;
 	Puzzle();
 	Puzzle(std::vector< std::vector<int> > state, Puzzle *p);
@@ -35,6 +41,8 @@ public:
 	void moves();
 	void swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j, int r, int c);
 	int printResult(int step);
+	int calcEnergy ();
+	int numberPosition(int n);
 };
 
 std::list <Puzzle> states;
@@ -55,6 +63,7 @@ Puzzle::Puzzle (std::vector< std::vector<int> > state, Puzzle *p) {
 			emptyPosition = i * size + j;
 		}
 	}
+	energy = calcEnergy();
 }
 
 void Puzzle::printPuzzle () {
@@ -126,6 +135,44 @@ int Puzzle::printResult(int step) {
 	return step;
 }
 
+unsigned long long int fat (int n) {
+	unsigned long long int f = 1;
+	for (n = n; n > 1; --n) {
+		f *= n;
+	}
+	return f;
+}
+
+int Puzzle::calcEnergy () {
+	int e = 0;
+	int i, j, k, r, c;
+	for (i = 0; i < size; ++i) {
+		for (j = 0; j < size; ++j) {
+			if (finalBoard[i][j] != board[i][j]) {
+				k = numberPosition(finalBoard[i][j]);
+				if (k != -1) {
+					r = k / size;
+					c = k % size;
+					e += (i > r ? i - r : r - i ) + (j > c ? j - c : c -j);
+				}
+			}
+		}
+	}
+	return e;
+}
+
+int Puzzle::numberPosition(int n) {
+	int i, j;
+	for (int k = 0; k < size * size; ++k) {
+		i = k / size;
+		j = k % size;
+		if (board[i][j] == n) {
+			return k;
+		}
+	}
+	return -1;
+}
+
 void getInitialAndfinalBoards () {
 	scanf("%d", &size);
 	scanf("%d", &empty);
@@ -149,12 +196,19 @@ void getInitialAndfinalBoards () {
 			scanf("%d%*c", &finalBoard[i][j]);
 		}
 	}
+	T = fat(size * size) / 2;
 }
 
 int main() {
 	getInitialAndfinalBoards();
 	initialState = new Puzzle(initialBoard, NULL);
 	finalState = new Puzzle(finalBoard, NULL);
+
+
+	cout << initialState->energy << endl;
+	cout << finalState->energy << endl;
+
+	return 0;
 
 	if (initialState->board == finalState->board) {
 		initialState->printResult(0);
@@ -164,11 +218,14 @@ int main() {
 	states.push_back(*initialState);
 	createdStates.insert(initialState->board);
 
+	int x = 0;
 	for (std::list<Puzzle>::iterator it=states.begin(); it != states.end() && finalState->parent == NULL; ++it) {
+		x++;
 		(*it).moves();
 	}
 	if (finalState->parent != NULL) {
 		finalState->printResult(0);
+		printf("%d\n", x);
 	} else {
 		printf("NO RESULT\n");
 	}
