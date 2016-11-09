@@ -16,17 +16,20 @@
 
 using namespace std;
 
+int boardToInt(std::vector< std::vector<int> > &auxBoard);
+
 int size = 3;
 int empty = 9;
 std::vector< std::vector<int> > initialBoard;
 std::vector< std::vector<int> > finalBoard;
-std::set <std::vector< std::vector<int> > > createdStates;
+std::set <int> createdStates;
 
 class Puzzle
 {
 public:
 	std::vector< std::vector<int> > board;
 	int emptyPosition;
+	int intBoard;
 	Puzzle *parent;
 	Puzzle();
 	Puzzle(std::vector< std::vector<int> > state, Puzzle *p);
@@ -41,18 +44,21 @@ std::list <Puzzle> states;
 Puzzle *initialState, *finalState;
 
 Puzzle::Puzzle (std::vector< std::vector<int> > state, Puzzle *p) {
-	int i, j;
+	int i, j, control = 1;
 	board.resize(size);
 	for(int k = 0 ; k < size ; ++k) {
 		board[k].resize(size);
 	}
 	board = state;
 	parent = p;
-	for (int k = 0; k < size * size; ++k) {
-		i = k / size;
-		j = k % size;
-		if (board[i][j] == empty) {
-			emptyPosition = i * size + j;
+	intBoard = 0;
+	for (i = size -1 ; i >= 0; --i) {
+		for (j = size - 1; j >= 0; --j) {
+			intBoard += board[i][j] * control;
+			control *= 10;
+			if (board[i][j] == empty) {
+				emptyPosition = i * size + j;
+			}
 		}
 	}
 }
@@ -82,11 +88,13 @@ void Puzzle::swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j,
 void Puzzle::move(int i, int j, int r, int c) {
 	std::vector< std::vector<int> > auxBoard;
 	Puzzle *newState;
+	int auxIntBoard;
 
 	auxBoard = board;
 	swapEmpty(auxBoard, i, j, r, c);
-	if (createdStates.find(auxBoard) == createdStates.end()) {
-		createdStates.insert(auxBoard);
+	auxIntBoard = boardToInt(auxBoard);
+	if (createdStates.find(auxIntBoard) == createdStates.end()) {
+		createdStates.insert(auxIntBoard);
 		newState = new Puzzle(auxBoard,this);
 		states.push_back(*newState);
 		if (auxBoard == finalBoard) {
@@ -126,6 +134,19 @@ int Puzzle::printResult(int step) {
 	return step;
 }
 
+int boardToInt(std::vector< std::vector<int> > &auxBoard) {
+	int intBoard = 0;
+	int i, j, control = 10;
+	for (i = size - 1; i >= 0; --i)
+	{
+		for (j = size - 1; j >= 0; --j) {
+			intBoard += auxBoard[i][j] * control;
+			control *= 10;
+		}
+	}
+	return intBoard;
+}
+
 void getInitialAndfinalBoards () {
 	scanf("%d", &size);
 	scanf("%d", &empty);
@@ -161,13 +182,13 @@ int main() {
 	initialState = new Puzzle(initialBoard, NULL);
 	finalState = new Puzzle(finalBoard, NULL);
 
-	if (initialState->board == finalState->board) {
+	if (initialState->intBoard == finalState->intBoard) {
 		initialState->printResult(0);
 		return 0;
 	}
 
 	states.push_back(*initialState);
-	createdStates.insert(initialState->board);
+	createdStates.insert(initialState->intBoard);
 
 	for (std::list<Puzzle>::iterator it=states.begin(); it != states.end() && finalState->parent == NULL; ++it) {
 		(*it).moves();
