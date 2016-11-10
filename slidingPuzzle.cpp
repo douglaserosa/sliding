@@ -18,43 +18,42 @@ using namespace std;
 
 int size = 3;
 int empty = 9;
-std::vector< std::vector<int> > initialBoard;
-std::vector< std::vector<int> > finalBoard;
-std::set <std::vector< std::vector<int> > > createdStates;
+set <vector<vector<int> > > createdStates;
 
-class Puzzle
-{
+class Puzzle {
 public:
-	std::vector< std::vector<int> > board;
+	vector<vector<int> > board;
 	int emptyPosition;
 	Puzzle *parent;
-	Puzzle();
-	Puzzle(std::vector< std::vector<int> > state, Puzzle *p);
+	Puzzle(vector<vector<int> > state, Puzzle *p);
 	void printPuzzle();
 	void move(int i, int j, int r, int c);
 	void moves();
-	void swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j, int r, int c);
+	void moveEmpty (vector<vector<int> > &newBoard, int i, int j, int r, int c);
 	int printResult(int step);
+	int getEmptyPosition();
 };
 
-std::list <Puzzle> states;
+list <Puzzle> states;
 Puzzle *initialState, *finalState;
 
-Puzzle::Puzzle (std::vector< std::vector<int> > state, Puzzle *p) {
-	int i, j;
-	board.resize(size);
-	for(int k = 0 ; k < size ; ++k) {
-		board[k].resize(size);
-	}
+Puzzle::Puzzle (vector<vector<int> > state, Puzzle *p) {
 	board = state;
 	parent = p;
-	for (int k = 0; k < size * size; ++k) {
-		i = k / size;
-		j = k % size;
-		if (board[i][j] == empty) {
-			emptyPosition = i * size + j;
+	emptyPosition = getEmptyPosition();
+}
+
+int Puzzle::getEmptyPosition() {
+	int position = -1;
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			if (board[i][j] == empty) {
+				position = i * size + j;
+				return position;
+			}
 		}
 	}
+	return position;
 }
 
 void Puzzle::printPuzzle () {
@@ -72,24 +71,23 @@ void Puzzle::printPuzzle () {
 	printf("\n");
 }
 
-void Puzzle::swapEmpty (std::vector< std::vector<int> > &auxBoard, int i, int j, int r, int c) {
-	int swap;
-	swap = auxBoard[i][j];
-	auxBoard[i][j] = auxBoard[r][c];
-	auxBoard[r][c] = swap;
+void Puzzle::moveEmpty (vector<vector<int> > &state, int i, int j, int r, int c) {
+	int swap = state[i][j];
+	state[i][j] = state[r][c];
+	state[r][c] = swap;
 }
 
 void Puzzle::move(int i, int j, int r, int c) {
-	std::vector< std::vector<int> > auxBoard;
+	vector<vector<int> > newBoard;
 	Puzzle *newState;
 
-	auxBoard = board;
-	swapEmpty(auxBoard, i, j, r, c);
-	if (createdStates.find(auxBoard) == createdStates.end()) {
-		createdStates.insert(auxBoard);
-		newState = new Puzzle(auxBoard,this);
+	newBoard = board;
+	moveEmpty(newBoard, i, j, r, c);
+	if (createdStates.find(newBoard) == createdStates.end()) {
+		newState = new Puzzle(newBoard,this);
+		createdStates.insert(newBoard);
 		states.push_back(*newState);
-		if (auxBoard == finalBoard) {
+		if (newState->board == finalState->board) {
 			finalState = newState;
 		}
 	}
@@ -126,17 +124,11 @@ int Puzzle::printResult(int step) {
 	return step;
 }
 
-void getInitialAndfinalBoards () {
+void getInitialAndfinalStates () {
 	scanf("%d", &size);
 	scanf("%d", &empty);
-
-	initialBoard.resize(size);
-	finalBoard.resize(size);
-
-	for(int i = 0 ; i < size ; ++i) {
-		initialBoard[i].resize(size);
-		finalBoard[i].resize(size);
-	}
+	vector<vector<int> > initialBoard(size, vector<int> (size));
+	vector<vector<int> > finalBoard(size, vector<int> (size));
 	
 	for (int i = 0; i < size; ++i) {
 		for (int j = 0; j < size; ++j) {
@@ -149,6 +141,8 @@ void getInitialAndfinalBoards () {
 			scanf("%d%*c", &finalBoard[i][j]);
 		}
 	}
+	initialState = new Puzzle(initialBoard, NULL);
+	finalState = new Puzzle(finalBoard, NULL);
 }
 
 int main() {
@@ -157,9 +151,7 @@ int main() {
 
 	gettimeofday(&begin, NULL);
 
-	getInitialAndfinalBoards();
-	initialState = new Puzzle(initialBoard, NULL);
-	finalState = new Puzzle(finalBoard, NULL);
+	getInitialAndfinalStates();
 
 	if (initialState->board == finalState->board) {
 		initialState->printResult(0);
@@ -169,7 +161,7 @@ int main() {
 	states.push_back(*initialState);
 	createdStates.insert(initialState->board);
 
-	for (std::list<Puzzle>::iterator it=states.begin(); it != states.end() && finalState->parent == NULL; ++it) {
+	for (list<Puzzle>::iterator it = states.begin(); it != states.end() && finalState->parent == NULL; ++it) {
 		(*it).moves();
 	}
 	if (finalState->parent != NULL) {
@@ -182,6 +174,6 @@ int main() {
 	temp = ((end.tv_sec + ((double) end.tv_usec / 1000000)) -
 	        (begin.tv_sec + ((double) begin.tv_usec / 1000000)));
 
-	printf("TIME: %.10lf seconds.\n", temp);
+	printf("TIME: %.5lf seconds.\n", temp);
 	return 0;
 }
