@@ -85,8 +85,8 @@ void Puzzle::move(int i, int j, int r, int c) {
 	moveEmpty(newBoard, i, j, r, c);
 	if (createdStates.find(newBoard) == createdStates.end()) {
 		newState = new Puzzle(newBoard,this);
-		createdStates.insert(newBoard);
 		states.push_back(*newState);
+		createdStates.insert(newState->board);
 		if (newState->board == finalState->board) {
 			finalState = newState;
 		}
