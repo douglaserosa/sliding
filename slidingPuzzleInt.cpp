@@ -28,7 +28,7 @@ public:
 	int intBoard;
 	int emptyPosition;
 	Puzzle *parent;
-	Puzzle(vector<vector<int> > state, Puzzle *p);
+	Puzzle(vector<vector<int> > &state, Puzzle *p);
 	void printPuzzle();
 	void move(int i, int j, int r, int c);
 	void moves();
@@ -40,7 +40,7 @@ public:
 list <Puzzle> states;
 Puzzle *initialState, *finalState;
 
-Puzzle::Puzzle (vector<vector<int> > state, Puzzle *p) {
+Puzzle::Puzzle (vector<vector<int> > &state, Puzzle *p) {
 	board = state;
 	parent = p;
 	emptyPosition = getEmptyPosition();
