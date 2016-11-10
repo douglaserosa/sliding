@@ -192,6 +192,6 @@ int main() {
 	temp = ((end.tv_sec + ((double) end.tv_usec / 1000000)) -
 	        (begin.tv_sec + ((double) begin.tv_usec / 1000000)));
 
-	printf("TIME: %.5lf seconds.\n", temp);
+	printf("TIME: %.6lf seconds.\n", temp);
 	return 0;
 }
