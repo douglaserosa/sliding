@@ -133,8 +133,8 @@ int Puzzle::printResult(int step) {
 int getIntBoard(vector<vector<int> > &board) {
 	int n = 0;
 	int control = 1;
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
+	for (int i = size - 1; i >= 0; --i) {
+		for (int j = size - 1; j >= 0; --j) {
 			n += board[i][j] * control;
 			control *= 10;
 		}
