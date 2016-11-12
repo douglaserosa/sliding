@@ -172,8 +172,7 @@ int main() {
 	getInitialAndfinalStates();
 
 	if (initialState->intBoard == finalState->intBoard) {
-		initialState->printResult(0);
-		return 0;
+		finalState->parent = initialState;
 	}
 
 	states.push_back(*initialState);
@@ -188,9 +187,11 @@ int main() {
 		printf("NO RESULT\n");
 	}
 
+	printf("CREATED STATES: %d\n", (int) createdStates.size());
+
 	gettimeofday(&end, NULL);
 	temp = ((end.tv_sec + ((double) end.tv_usec / 1000000)) -
-	        (begin.tv_sec + ((double) begin.tv_usec / 1000000)));
+		(begin.tv_sec + ((double) begin.tv_usec / 1000000)));
 
 	printf("TIME: %.6lf seconds.\n", temp);
 	return 0;
