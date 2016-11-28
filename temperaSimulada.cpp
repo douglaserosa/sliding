@@ -30,7 +30,6 @@ public:
 	vector<vector<int> > board;
 	int emptyPosition;
 	int energy;
-	int energy2;
 	Puzzle *parent;
 	Puzzle(vector<vector<int> > &state, Puzzle *p);
 	void printPuzzle();
@@ -52,7 +51,7 @@ Puzzle::Puzzle (vector<vector<int> > &state, Puzzle *p) {
 	parent = p;
 	emptyPosition = getEmptyPosition();
 	energy = calcEnergy();
-	energy2 = calcEnergy2();
+	// energy = calcEnergy2();
 }
 
 int Puzzle::getEmptyPosition() {
@@ -210,7 +209,8 @@ unsigned long long int fat (int n) {
 
 int main() {
 	Puzzle *current, *candidate;
-	int delta, index, next, max, min;
+	int delta, next, max, min;
+	unsigned int index;
 	unsigned long long int maxStates;
 	struct timeval begin, end;
 	double temp, random, probability;
@@ -241,31 +241,25 @@ int main() {
 			min = index + 1;
 			next = min + rand() % (max - min + 1);
 	  		candidate = &states[next];
-	        delta = current->energy - candidate->energy;
-	        if (delta >= 0) {
-	        	// printf("ACEITOU\n\n");
-	        	// printf("Current energy = %d\n", states[index].energy);
-	        	// printf("Next energy = %d\n\n", states[next].energy);
-	        	
-	        	states.insert(states.begin() + index + 1, states[next]);
+	        // delta = current->energy - candidate->energy;
+	        delta = T - candidate->energy;
+			// printf("T: %d, Current: %d, Next = %d\n", T, current->energy, candidate->energy);
+	        if (delta > 0) {
+				// T = candidate->energy < T ? candidate->energy : T;
+				T = candidate->energy;
+				states.insert(states.begin() + index + 1, *candidate);
 				states.erase(states.begin() + next + 1);
-				
+				index++;
         	} else {
-        		// printf("NAO ACEITOU\n");
-	        	// printf("Current energy = %d\n", states[index].energy);
-	        	// printf("Next energy = %d\n", states[next].energy);
         		probability = pow(M_E, (double) delta / (double) T);
-        		random = (double) (rand() % 100) / 100;
+				random = (double) (rand() % 101) / 100;
 	        	if (probability > random) {
-	        		// printf("index = %d, probability: %lf, random: %lf\n\n", index, probability, random);
-	        		states.insert(states.begin() + index + 1, states[next]);
+					states.insert(states.begin() + index + 1, *candidate);
 					states.erase(states.begin() + next + 1);
-					
+					index++;
 	        	}
         	}
 		}
-		T = states[index].energy;
-		index++;
 	}
 	if (finalState->parent != NULL) {
 		finalState->printResult(0);
