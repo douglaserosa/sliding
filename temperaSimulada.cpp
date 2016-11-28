@@ -5,13 +5,16 @@
  * Created on Oct 7, 2016, 3:20 AM
  */
 
+#define _USE_MATH_DEFINES
 #include <stdio.h>
-#include <stdlib.h>
 #include <cstdlib>
 #include <iostream>
 #include <set>
 #include <vector>
 #include <list>
+#include <climits>
+#include <cmath>
+#include <time.h>
 #include <sys/time.h>
 
 using namespace std;
@@ -41,7 +44,7 @@ public:
 	int calcEnergy2();
 };
 
-list <Puzzle> states;
+vector <Puzzle> states;
 Puzzle *initialState, *finalState;
 
 Puzzle::Puzzle (vector<vector<int> > &state, Puzzle *p) {
@@ -196,11 +199,27 @@ void getInitialAndfinalStates () {
 	T = finalState->energy;
 }
 
+unsigned long long int fat (int n) {
+	unsigned long long int f = 1;
+	n = abs(n);
+	do {
+		f *= n;
+	}  while (--n);
+	return f;
+}
+
 int main() {
+	Puzzle *current, *candidate;
+	int delta, index, next, max, min;
+	unsigned long long int maxStates;
 	struct timeval begin, end;
-	double temp;
+	double temp, random, probability;
 
 	gettimeofday(&begin, NULL);
+
+	srand(time(NULL));
+
+	maxStates = fat(size*size) / 2;
 
 	getInitialAndfinalStates();
 
@@ -208,11 +227,45 @@ int main() {
 		finalState->parent = initialState;
 	}
 
+	states.reserve(maxStates);
 	states.push_back(*initialState);
 	createdStates.insert(initialState->board);
 
-	for (list<Puzzle>::iterator it = states.begin(); it != states.end() && finalState->parent == NULL; ++it) {
-		(*it).moves();
+	T = initialState->energy;
+	index = 0;
+	while(index < states.size() && T > 0 && finalState->parent == NULL) {
+		current = &states[index];
+		current->moves();
+		if (index + 1 < states.size()) {
+			max = states.size() - 1;
+			min = index + 1;
+			next = min + rand() % (max - min + 1);
+	  		candidate = &states[next];
+	        delta = current->energy - candidate->energy;
+	        if (delta >= 0) {
+	        	// printf("ACEITOU\n\n");
+	        	// printf("Current energy = %d\n", states[index].energy);
+	        	// printf("Next energy = %d\n\n", states[next].energy);
+	        	
+	        	states.insert(states.begin() + index + 1, states[next]);
+				states.erase(states.begin() + next + 1);
+				
+        	} else {
+        		// printf("NAO ACEITOU\n");
+	        	// printf("Current energy = %d\n", states[index].energy);
+	        	// printf("Next energy = %d\n", states[next].energy);
+        		probability = pow(M_E, (double) delta / (double) T);
+        		random = (double) (rand() % 100) / 100;
+	        	if (probability > random) {
+	        		// printf("index = %d, probability: %lf, random: %lf\n\n", index, probability, random);
+	        		states.insert(states.begin() + index + 1, states[next]);
+					states.erase(states.begin() + next + 1);
+					
+	        	}
+        	}
+		}
+		T = states[index].energy;
+		index++;
 	}
 	if (finalState->parent != NULL) {
 		finalState->printResult(0);
